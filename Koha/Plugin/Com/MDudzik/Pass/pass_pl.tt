@@ -1,0 +1,122 @@
+[% USE Koha %]
+[% INCLUDE 'doc-head-open.inc' %]
+<title>Koha &rsaquo; Narzędzia &rsaquo; Wtyczki &rsaquo; Change Password Plugin</title>
+[% INCLUDE 'doc-head-close.inc' %]
+[% USE AuthorisedValues %]
+</head>
+<body id="pass_main" class="pass">
+[% INCLUDE 'header.inc' %]
+[% INCLUDE 'home-search.inc' %]
+<div id="breadcrumbs"><a href="/cgi-bin/koha/mainpage.pl">Strona główna</a> &rsaquo; <a href="/cgi-bin/koha/tools/tools-home.pl"> Narzędzia</a> &rsaquo; <a href="/cgi-bin/koha/plugins/plugins-home.pl">Wtyczki</a> &rsaquo; Change Password Plugin</div>
+<div id="doc" class="yui-t7">
+<div id="bd">
+<div id="yui-main">
+<div id="yui-b">
+<form method="post" id="changepasswordf">
+<input type="hidden" name="class" value="[% class %]" />
+<input type="hidden" name="method" value="[% method %]" />
+[% IF ( errormsg ) %]
+<div class="dialog alert">
+<h4>Wystąpił błąd:</h4>
+<ul>
+[% IF ( ERROR ) %]
+<li>Nieoczekiwany błąd.</li>
+[% END %]
+[% IF ( ERROR_password_too_short ) %]
+<li id="ERROR_short_password">Hasło musi mieć przynajmniej  [% Koha.Preference('minPasswordLength') | html %] characters long.</li>
+[% END %]
+[% IF ( ERROR_password_too_weak ) %]
+<li id="ERROR_weak_password">Hasło musi zawierać przynajmniej jedną cyfrę, jedną małą i wielką literę.</li>
+[% END %]
+[% IF ( ERROR_password_has_whitespaces ) %]
+<li id="ERROR_weak_password">Hasło nie może zawierać początkowych i końcowych spacji.</li>
+[% END %]
+[% IF ( NOMATCH ) %]
+<li><strong>Podane hasło nie pasuje</strong>. Proszę ponownie wprowadzić nowe hasło.</li>
+[% END %]
+</ul>
+</div>
+[% END %]
+<fieldset class="brief"><legend>Zmień hasło dla [% patron.firstname | html %] [% patron.surname | html %]</legend>
+<ol>
+[% SET password_pattern = ".{" _ Koha.Preference('minPasswordLength') _ ",}" %]
+[% IF Koha.Preference('RequireStrongPassword') %]
+[% SET password_pattern = '(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{' _ Koha.Preference('minPasswordLength') _ ',}' %]
+[% END %]
+<li>
+<label for="newpassword">Nowe hasło:</label>
+<div class="hint">Koha nie może wyświetlić istniejącego hasła. Jeśli chcesz pozostawić hasło bez zmian, pozostaw to pole puste.</div>
+<input name="newpassword"  id="newpassword" type="password" size="20" />
+</li>
+<li>
+<label for="newpassword2">Potwierdź nowe hasło:</label>
+<input name="newpassword2"  id="newpassword2" type="password" size="20" />
+</li>
+</ol>
+</fieldset>
+<fieldset class="action">
+<input type="submit" value="Zapisz" />
+<a class="cancel" href="/cgi-bin/koha/mainpage.pl">Anuluj</a>
+</fieldset>
+</form>
+</div>
+</div>
+</div>
+<script>
+function generate_password() {
+	// Always generate a strong password
+	var chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+	var length = [% Koha.Preference('minPasswordLength') | html %];
+	if ( length < 8 ) length = 8;
+	var password='';
+	for ( var i = 0 ; i < length ; i++){
+		password += chars.charAt(Math.floor(Math.random()*chars.length));
+	}
+	return password;
+}
+$(document).ready(function() {
+	$("body").on('click', "#fillrandom",function(e) {
+		e.preventDefault();
+		var password = '';
+		var pattern_regex = /(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{[% Koha.Preference('minPasswordLength') | html %],}/;
+		while ( ! pattern_regex.test( password ) ) {
+			password = generate_password();
+		}
+		$("#newpassword").val(password);
+		$("#newpassword").attr('type', 'text');
+		$("#newpassword2").val(password);
+		$("#newpassword2").attr('type', 'text');
+	});
+	$("div.hint").eq(0).after(" <div class=\"hint\"><a href=\"#\" id=\"fillrandom\">"+_("Kliknij, aby wypełnić losowo generowaną podpowiedzią. ")+"<strong>"+_("Hasło będzie wyświetlane w postaci tekstu")+"</strong>.</a></div>");
+
+	$(document).ajaxStart(function () {
+		$("input[name^=newpassword]").hide();
+		$("label[for=newpassword2]").hide();
+		$(".hint:last").after($(".loading").show());
+	});
+	$(document).ajaxStop(function () {
+		$("input[name^=newpassword]").show();
+		$("label[for=newpassword2]").show();
+		$(".loading").hide();
+		$("label.error").hide();
+	});
+	[% IF NOMATCH %]
+	$("#newpassword").addClass('focus');
+	[% END %]
+
+	$("#changepasswordf").validate({
+		rules: {
+			newpassword: {
+				password_strong: true,
+				password_no_spaces: true
+			},
+			newpassword2: {
+				password_match: true
+			}
+		}
+	});
+});
+</script>
+[% PROCESS 'password_check.inc' %]
+[% PROCESS 'add_password_check' new_password => 'newpassword' %]
+[% INCLUDE 'intranet-bottom.inc' %]
