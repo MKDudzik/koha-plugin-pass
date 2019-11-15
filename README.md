@@ -8,7 +8,7 @@ Koha's Plugin System (available in Koha 3.12+) allows you to add additional tool
 
 # Downloading
 
-From the [release page](https://github.com/kohawbibliotecepl/koha-plugin-pass/releases) you can download the relevant *.kpz file
+From the [release page](https://github.com/MKDudzik/koha-plugin-pass/releases) you can download the relevant *.kpz file
 
 # Installing
 
