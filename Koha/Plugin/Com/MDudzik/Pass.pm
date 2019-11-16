@@ -8,16 +8,14 @@ use base qw( Koha::Plugins::Base );
 
 ## We will also need to include any Koha libraries we want to access
 use CGI;
-use Cwd qw( abs_path );
 use C4::Auth;
 use C4::Context;
 use C4::Output;
-use Koha::Patrons;
 use Koha::AuthUtils qw(hash_password);
 use C4::Languages qw(getlanguage);
 
 ## Here we set our plugin version
-our $VERSION = "0.1";
+our $VERSION = "0.2";
 
 ## Here is our metadata. Some keys are required while some are optional.
 our $metadata = {
@@ -27,7 +25,7 @@ our $metadata = {
 	date_authored   => '2019-11-04',
 	date_updated    => '2019-11-04',
 	minimum_version => '17.11',
-	maximum_version => '18.11.10.000',
+	maximum_version => undef,
 	version         => $VERSION,
 };
 
@@ -108,20 +106,17 @@ sub tool {
 	}
 	
 	if ( $newpassword and not @errors) {
-	
 		if ( $koha_ver < 18.11){
 			$digest = hash_password( scalar $newpassword );
 		}else{
 			$digest = $newpassword;
 		}
-
-		if ( $patron->update_password($patron->userid, $digest) ) {
-			print $query->redirect("/cgi-bin/koha/mainpage.pl?logout.x=1&pass_change=1");
+		if ( $koha_ver >= 19.05){
+			$patron->Koha::Patron::set_password({ password => $digest });
 		}else{
-
-			push( @errors, 'ERROR' );
+			$patron->Koha::Patron::update_password($patron->userid, $digest) 
 		}
-		
+		print $query->redirect("/cgi-bin/koha/mainpage.pl?logout.x=1&pass_change=1");	
 	}
 	
 	if ( scalar(@errors) ) {

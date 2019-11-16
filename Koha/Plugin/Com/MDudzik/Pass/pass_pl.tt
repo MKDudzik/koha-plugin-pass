@@ -23,7 +23,7 @@
 <li>Nieoczekiwany błąd.</li>
 [% END %]
 [% IF ( ERROR_password_too_short ) %]
-<li id="ERROR_short_password">Hasło musi mieć przynajmniej  [% Koha.Preference('minPasswordLength') | html %] characters long.</li>
+<li id="ERROR_short_password">Hasło musi mieć przynajmniej [% Koha.Preference('minPasswordLength') | html %] znaków.</li>
 [% END %]
 [% IF ( ERROR_password_too_weak ) %]
 <li id="ERROR_weak_password">Hasło musi zawierać przynajmniej jedną cyfrę, jedną małą i wielką literę.</li>
